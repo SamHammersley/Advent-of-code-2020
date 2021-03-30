@@ -11,6 +11,10 @@ public class Day13 extends Puzzle<BigInteger> {
         super("\n", "");
     }
 
+    private long nextMultiple(long id, long timestamp) {
+        return id * (1 + timestamp / id);
+    }
+
     @Override
     public BigInteger part1() {
         int earliestTimestamp = Integer.parseInt(input.get(0));
@@ -18,24 +22,22 @@ public class Day13 extends Puzzle<BigInteger> {
         long waitTime = Integer.MAX_VALUE;
 
         for (String s : input.get(1).split(",")) {
-            try {
-                int id = Integer.parseInt(s);
-                int d = id * (1 + earliestTimestamp / id);
+            if (s.equalsIgnoreCase("x")) {
+                continue;
+            }
+            long id = mapToInt(s);
+            long r = nextMultiple(id, earliestTimestamp);
 
-                if (d - earliestTimestamp < waitTime) {
-                    waitTime = d - earliestTimestamp;
-                    closestId = id;
-                }
-            } catch (Exception e) {
-
+            if (r - earliestTimestamp < waitTime) {
+                waitTime = r - earliestTimestamp;
+                closestId = id;
             }
         }
 
         return BigInteger.valueOf(closestId * waitTime);
     }
 
-
-    private Map<Long, Long> indexInput(String[] ids) {
+    private Map<Long, Long> getRemainders(String[] ids) {
         Map<Long, Long> index = new LinkedHashMap<>();
         index.put(mapToInt(ids[0]), 0L);
 
@@ -45,13 +47,7 @@ public class Day13 extends Puzzle<BigInteger> {
             }
 
             long id = mapToInt(ids[i]);
-
-            if (id < i) {
-                index.put(id, id * ((i / id) + 1) - i);
-
-            } else {
-                index.put(id, id - i);
-            }
+            index.put(id, nextMultiple(id, i) - i);
         }
 
         return index;
@@ -60,7 +56,7 @@ public class Day13 extends Puzzle<BigInteger> {
     @Override
     public BigInteger part2() {
         String[] ids = input.get(1).split(",");
-        Map<Long, Long> index = indexInput(ids);
+        Map<Long, Long> index = getRemainders(ids);
 
         long product = index.keySet().stream().reduce((a, b) -> a * b).get();
         BigInteger solution = BigInteger.ZERO;
