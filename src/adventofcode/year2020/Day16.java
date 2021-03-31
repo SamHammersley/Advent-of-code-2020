@@ -5,7 +5,10 @@ import adventofcode.year2020.util.FieldRule;
 import adventofcode.year2020.util.Ticket;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -36,16 +39,23 @@ public final class Day16 extends Puzzle<Long> {
     public Long part2() {
         int ticketStartIndex = input.indexOf(YOUR_TICKET_KEY);
 
-        Set<FieldRule> rules = mapInput(FieldRule::parse).limit(ticketStartIndex - 1).collect(Collectors.toSet());
+        Set<FieldRule> rules = mapInput(FieldRule::parse)
+                .limit(ticketStartIndex - 1)
+                .collect(Collectors.toSet());
 
-        Ticket myTicket = mapInput(s -> s.split(",\\s*")).skip(ticketStartIndex + 1).limit(1).findAny().map(Ticket::parse).get();
+        Ticket myTicket = mapInput(s -> s.split(",\\s*"))
+                .skip(ticketStartIndex + 1)
+                .limit(1)
+                .findAny()
+                .map(Ticket::parse).get();
 
-        Set<Ticket> tickets = mapInput(s -> s.split(",\\s*")).skip(ticketStartIndex + 2)
+        Set<Ticket> tickets = mapInput(s -> s.split(",\\s*"))
+                .skip(ticketStartIndex + 2)
                 .map(Ticket::parse)
                 .filter(t -> isValid(t, rules))
                 .collect(Collectors.toSet());
 
-        Map<FieldRule, Integer> index = mapFields(new LinkedHashMap<>(), rules, tickets);
+        Map<FieldRule, Integer> index = mapFields(new LinkedHashMap<>(), rules, tickets, rules.size());
 
         Stream<Integer> departurePositions = index.keySet()
                 .stream()
@@ -55,40 +65,30 @@ public final class Day16 extends Puzzle<Long> {
         return departurePositions.mapToLong(i -> myTicket.getValues().get(i)).reduce((a,b) -> a*b).getAsLong();
     }
 
-    private Map<FieldRule, Integer> mapFields(Map<FieldRule, Integer> index, Set<FieldRule> rules, Set<Ticket> tickets) {
+    private Map<FieldRule, Integer> mapFields(Map<FieldRule, Integer> index, Set<FieldRule> rules, Set<Ticket> tickets, int columns) {
         if (rules.isEmpty()) {
             return index;
         }
 
-        for (int i = 0; i < 20; i++) {
-            Set<FieldRule> matches = new HashSet<>();
+        IntStream.range(0, columns).forEach(columnIndex -> {
 
-            for (FieldRule rule : rules) {
-                boolean match = true;
+            List<Integer> column = tickets.stream()
+                    .map(t -> t.getValues().get(columnIndex))
+                    .collect(Collectors.toList());
 
-                for (Ticket t : tickets) {
-                    int value = t.getValues().get(i);
-
-                    if (!rule.test(value)) {
-                        match = false;
-                        break;
-                    }
-                }
-
-                if (match) {
-                    matches.add(rule);
-                }
-            }
+            List<FieldRule> matches = rules.stream()
+                    .filter(r -> column.stream().allMatch(r::test))
+                    .collect(Collectors.toList());
 
             if (matches.size() == 1) {
-                FieldRule rule = matches.iterator().next();
+                FieldRule rule = matches.get(0);
 
-                index.put(rule, i);
+                index.put(rule, columnIndex);
                 rules.remove(rule);
             }
-        }
+        });
 
-        return mapFields(index, rules, tickets);
+        return mapFields(index, rules, tickets, columns);
     }
 
     private boolean isValid(Ticket ticket, Set<FieldRule> rules) {

@@ -1,6 +1,5 @@
 package adventofcode.year2020.util;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,10 +23,6 @@ public final class FieldRule {
     public boolean test(int value) {
         return (value >= lowerLowerBound && value <= lowerUpperBound)
                 || (value >= higherLowerBound && value <= higherUpperBound);
-    }
-
-    public boolean testMultiple(List<Integer> values) {
-        return values.stream().anyMatch(this::test);
     }
 
     @Override
