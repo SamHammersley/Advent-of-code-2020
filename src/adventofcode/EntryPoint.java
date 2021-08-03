@@ -21,13 +21,11 @@ public final class EntryPoint {
         try (Scanner scanner = new Scanner(System.in)) {
             year = scanner.nextInt();
             day = scanner.nextInt();
-
             puzzle = loadPuzzle(year, day);
 
         } catch(Exception e) {
-            System.out.println("Failed to load puzzle for year " + year + ", day " + day);
-            System.out.println("Attempting to get the puzzle for the previously selected year and day");
-
+            System.err.println("Failed to load puzzle for year " + year + ", day " + day);
+            e.printStackTrace();
             puzzle = loadPrevious();
         }
 
